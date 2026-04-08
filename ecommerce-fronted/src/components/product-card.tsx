@@ -5,6 +5,7 @@ type ProductsProps = {
   name: string;
   price: number;
   stock: number;
+  photo: string;
   handler: () => void;
 }
 const server ="sss";
@@ -17,7 +18,7 @@ const ProductCard = ({
   handler }: ProductsProps) => {
   return (
     <div className="product-card">
-      <img src={`${server}/${photo}`} alt={name} />
+      <img src={photo} alt={name} />
       <p>{name}</p>
       <span>₹{price}</span>
 <div>
