@@ -34,6 +34,9 @@ body{
 @import "admin-styles/mixin";
 @import "home.scss";
 @import "cart.scss";
+@import "shipping.scss";
+@import "login.scss";
+@import "search.scss";
 @import "admin-styles/dashboard";
 @import "admin-styles/products";
 @import "admin-styles/chart";
@@ -42,18 +45,7 @@ body{
 
 
 .header{
-  
-@include flex(row,flex-end,stretch,1.2rem);
-padding: 1rem;
-a{
-  color: $color2;
-  letter-spacing: 2px;
-  font-size: 1.2rem;  
-  &:hover{
-    color: $color3;
-  }
-}
-dialog{
+  dialog{
   border: 1px solid #ccc;
   border-radius: 5px;
   padding: 10px;
@@ -65,6 +57,7 @@ dialog{
     @include flex(column,flex-start,center,0.25rem);
   }
 }
+
 button{
   border: none;
   cursor: pointer;
@@ -74,27 +67,23 @@ button{
     color: $color3;
   }
 }
+@include flex(row,flex-end,stretch,1.2rem);
+padding: 1rem;
+a{
+  color: $color2;
+  letter-spacing: 2px;
+  font-size: 1.2rem;  
+  &:hover{
+    color: $color3;
+  }
+}
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+.heading{
+  @include heading;
+  margin: 1rem 0;
+  text-align: center
+}
 
 .admin-container {
   @include grid(1fr 4fr, 2rem);
