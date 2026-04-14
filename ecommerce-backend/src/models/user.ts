@@ -1,7 +1,7 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
 import validator from "validator";
 
-interface IUser extends Document{
+interface IUser extends Document<string>{
     _id: string;
     name: string;
     photo: string;
@@ -9,8 +9,8 @@ interface IUser extends Document{
     role:  "admin"| "user";
     gender: "male"|"female";
     dob: Date;
+    updatedAt: Date;
     createdAt: Date;
-    updateAt: Date;
     age:number;
 }
 
@@ -26,9 +26,13 @@ const schema = new mongoose.Schema(
     },
      email:{
         type : String,
-        unique:[true, "Email already Exist"],
+        unique: true,
         required:[true , "Please enter Email"],
-        validate: validator.default.isEmail 
+        validate: validator.default.isEmail, 
+    },
+     photo: {
+      type: String,
+      required: [true, "Please add photo"],
     },
      role:{
         type : String,
@@ -38,11 +42,11 @@ const schema = new mongoose.Schema(
      gender:{
         type : String,
         enum: ["male","female"],
-        required: [true , "Please enter Gender"]
+        required: [true , "Please enter Gender"],
     },
      dob:{
         type : Date,
-        required: "Please enter Date of birth",
+        required: [true ,"Please enter Date of birth"],
     },
 },
 {
@@ -55,9 +59,8 @@ schema.virtual("age").get(function(){
     const dob = this.dob;
     let age = today.getFullYear() - dob.getFullYear();
 
-
     if(today.getMonth() < dob.getMonth( ) ||
-     today.getMonth() == dob.getMonth( ) &&
+     today.getMonth() === dob.getMonth( ) &&
     today.getDate() < dob.getDate())
 {
     age--;
