@@ -1,33 +1,41 @@
-import {Request , NextFunction ,Response} from "express"
+import { Request, NextFunction, Response } from "express";
 import { User } from "../models/user.js";
 import { NewUserRequestBody } from "../types/types.js";
+import ErrorHandler from "../utils/utility-class.js";
+import { TryCatch } from "../middlewares/error.js";
 
-export const newUser = async (
-        req: Request<{},{},NewUserRequestBody> , 
-        res: Response ,
-        next: NextFunction ) =>{
-        
-            try{
-            const{ name, email, photo, gender, _id, dob } = req.body;
+export const newUser = TryCatch(
+  async (
+    req: Request<{}, {}, NewUserRequestBody>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { name, email, photo, gender, _id, dob } = req.body;
 
-           const user = await User.create({
-                _id,
-                name,
-                email,
-                photo,
-                gender,
-                dob: new Date(dob),
-           });
+    let user = await User.findById(_id);
 
-           return res.status(201).json({
-                success: true,
-                message: `Welcome, ${user.name}`,
-            });
+    if (user)
+      return res.status(200).json({
+        success: true,
+        message: `Welcome , ${user.name}`,
+      });
 
-            }catch(error){
-               return res.status(400).json({
-                success: false,
-                message: (error as Error).message, 
-            });  
-            }
-};
+      if (!_id || !name || !email || !photo || !gender || !dob)
+  return next(new ErrorHandler("Please add all fields", 400));
+
+    user = await User.create({
+      _id,
+      name,
+      email,
+      photo,
+      gender,
+      dob: new Date(dob),
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: `Welcome, ${user.name}`,
+    });
+  }
+);
+export const getAllUsers = () =>{};
