@@ -8,7 +8,7 @@ export interface NewUserRequestBody {
   dob: Date;
 }
 export type ControllerType = (
-    req: Request<{}, {}, NewUserRequestBody>,
+    req: Request<any, any, any>,  
     res: Response,
     next: NextFunction
-) => Promise<void |Response<any, Record<string, any>>>;
+) => Promise<void | Response<any, Record<string, any>>>;   
