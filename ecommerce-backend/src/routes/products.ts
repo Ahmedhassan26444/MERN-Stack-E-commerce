@@ -1,6 +1,6 @@
 import express from "express";
 import { adminOnly } from "../middlewares/auth.js";
-import { deleteProduct, getAdminProducts, getAllCategories, getlatestProducts, getSingleProduct, newProduct, updateProduct } from "../controllers/product.js";
+import { deleteProduct, getAdminProducts, getAllCategories, getAllProducts, getlatestProducts, getSingleProduct, newProduct, updateProduct } from "../controllers/product.js";
 import { singleUpload } from "../middlewares/multer.js";
 import { get } from "node:http";
 
@@ -9,6 +9,8 @@ const app = express.Router();
 app.post("/new",adminOnly, singleUpload, newProduct);
 
 app.get("/latest", getlatestProducts);
+
+app.get("/all", getAllProducts);
 
 app.get("/categories", getAllCategories);
 
