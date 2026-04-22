@@ -1,7 +1,7 @@
 import express from "express";
 import { errorMiddleware } from "./middlewares/error.js";
 import { connectDB } from "./utils/features.js";
-
+import NodeCache from "node-cache";
 
 // Importing Routes
 import userRoute from "./routes/user.js";
@@ -10,6 +10,8 @@ const port = 4000;
 
 // Connect to MongoDB
 connectDB();
+
+export const mycache = new NodeCache();
 
 const app = express();
 app.use(express.json());
