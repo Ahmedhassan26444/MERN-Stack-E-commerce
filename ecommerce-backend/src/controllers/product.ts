@@ -5,6 +5,7 @@ import { Product } from "../models/product.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { rm } from "node:fs";
 import { mycache } from "../app.js";
+import { invalidateCache } from "../utils/features.js";
 // import { faker } from "@faker-js/faker";
 
 export const newProduct = TryCatch(
@@ -27,10 +28,13 @@ export const newProduct = TryCatch(
       category: category.toLowerCase(),
       photo: photo.path,
     });
+    await invalidateCache({ product: true });
+
     return res.status(201).json({
       success: true,
       message: "Product Created Successfully",
     });
+
   },
 );
 
@@ -126,6 +130,7 @@ export const updateProduct = TryCatch(
     if (stock) product.stock = stock;
     if (category) product.category = category;
     await product.save();
+    await invalidateCache({ product: true });
     return res.status(200).json({
       success: true,
       message: "Product updated Successfully",
@@ -141,7 +146,7 @@ export const updateProduct = TryCatch(
         console.log(" Product photo deleted");
       });
   await product.deleteOne();
-
+    
   return res.status(200).json({
     success: true,
     message: "Product deleted Successfully",
