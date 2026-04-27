@@ -29,9 +29,17 @@ export const invalidateCache = async ({
       "all-products",
       `product-${productId}`,
     ];
+
+    if (typeof productId === "string") productKeys.push(`product-${productId}`);
+
+    if (typeof productId === "object") {
+      productId.forEach((i) => productKeys.push(`product-${i}`));
+}
+    
+    
     mycache.del(productKeys);
   }
-
+  
   if (order) {
   const ordersKeys: string[] = ["all-orders", `my-orders-${userId}`,`order-${orderId}`];
   mycache.del(ordersKeys);
