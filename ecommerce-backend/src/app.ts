@@ -9,7 +9,8 @@ import userRoute from "./routes/user.js";
 import productRoute from "./routes/products.js";
 import orderRoute from "./routes/order.js";
 import paymentRoute from "./routes/payment.js";
-import path from "node:path";
+import dashboardRoute from "./routes/stats.js";
+
 
 const port = process.env.PORT || 4000;
 
@@ -38,7 +39,7 @@ app.use("/api/v1/product", productRoute);
 app.use("/api/v1/order", orderRoute);
 app.use("/api/v1/payment", paymentRoute);
 app.use("/uploads", express.static("uploads"));
-
+app.use("/api/v1/dashboard", dashboardRoute);
 
 app.use(errorMiddleware);
 
