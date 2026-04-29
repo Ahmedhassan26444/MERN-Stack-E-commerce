@@ -4,13 +4,14 @@ import { Order } from "../models/order.js";
 import { Product } from "../models/product.js";
 import { User } from "../models/user.js";
 import { calculatePercentage } from "../utils/features.js";
-
 export const getDashboardStats = TryCatch(async (req, res, next) => {
 let stats = {};
   if (mycache.has("admin-stats"))
     stats = JSON.parse(mycache.get("admin-stats") as string);
   else {
     const today = new Date();
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
     const thisMonth = {
       start: new Date(today.getFullYear(), today.getMonth(), 1),
@@ -62,6 +63,12 @@ const lastMonthOrdersPromise = Order.find({
     $lte: lastMonth.end,
   },
 });
+const lastSixMonthOrdersPromise = Order.find({
+  createdAt: {
+    $gte: sixMonthsAgo,
+    $lte: today,
+  },
+});
 const [
   thisMonthProducts,
   thisMonthUsers,
@@ -72,7 +79,10 @@ const [
   productsCount,  
   usersCount,     
   allOrders,
-] = await Promise.all([
+  lastSixMonthOrders,
+
+] 
+= await Promise.all([
   thisMonthProductsPromise,
   thisMonthUsersPromise,
   thisMonthOrdersPromise,
@@ -82,6 +92,7 @@ const [
   Product.countDocuments(),  
   User.countDocuments(),  
   Order.find({}).select("total"), 
+  lastSixMonthOrdersPromise 
 ]);
 const thisMonthRevenue = thisMonthOrders.reduce(
   (total, order) => total + (order.total || 0),
@@ -103,9 +114,52 @@ const changepercent = {
     lastMonthOrders.length
   ),
 };
-stats = {
-  changepercent,
+
+const revenue = allOrders.reduce(
+  (total, order) => total + (order.total || 0),
+  0
+);
+
+const count = {
+  revenue,
+  user: usersCount,
+  product: productsCount,
+  order: allOrders.length,
 };
+
+const orderMonthCounts = new Array(6).fill(0);
+const orderMonthyRevenue = new Array(6).fill(0);
+
+lastSixMonthOrders.forEach((order) => {
+  const creationDate = order.createdAt;
+  const monthDiff = today.getMonth() - creationDate.getMonth();
+
+  if (monthDiff < 6) {
+    orderMonthCounts[6 - monthDiff - 1] += 1;
+    orderMonthyRevenue[6 - monthDiff - 1] += order.total;
+
+  }
+});
+const categories = await Product.distinct("category");
+const categoriesCountPromise = categories.map((category: string) =>
+  Product.countDocuments({ category })
+);
+const categoriesCount = await Promise.all(categoriesCountPromise);
+const categoryCount: Record<string, number>[] = [];
+categories.forEach((category, i) => {
+  categoryCount.push({
+    [category]: Math.round((categoriesCount[i] / productsCount) * 100),
+  });
+});
+stats = {
+  categoryCount,
+  changepercent,
+  count,
+  chart: {
+   order:orderMonthCounts,
+   revenue:orderMonthyRevenue,
+  },
+};  
   }
 
   return res.status(200).json({
