@@ -3,9 +3,10 @@ import { TryCatch } from "../middlewares/error.js";
 import { Order } from "../models/order.js";
 import { Product } from "../models/product.js";
 import { User } from "../models/user.js";
-import { calculatePercentage } from "../utils/features.js";
+import { calculatePercentage, getInventory } from "../utils/features.js";
+
 export const getDashboardStats = TryCatch(async (req, res, next) => {
-let stats = {};
+  let stats = {};
   if (mycache.has("admin-stats"))
     stats = JSON.parse(mycache.get("admin-stats") as string);
   else {
@@ -24,150 +25,186 @@ let stats = {};
     };
 
     const thisMonthProductsPromise = Product.find({
-      createdAt: {
-        $gte: thisMonth.start,
-        $lte: thisMonth.end,
-      },
+      createdAt: { $gte: thisMonth.start, $lte: thisMonth.end },
     });
 
     const lastMonthProductsPromise = Product.find({
-      createdAt: {
-        $gte: lastMonth.start,
-        $lte: lastMonth.end,
-      },
+      createdAt: { $gte: lastMonth.start, $lte: lastMonth.end },
     });
 
     const thisMonthUsersPromise = User.find({
-      createdAt: {
-        $gte: thisMonth.start,
-        $lte: thisMonth.end,
-      },
+      createdAt: { $gte: thisMonth.start, $lte: thisMonth.end },
     });
 
     const lastMonthUsersPromise = User.find({
-      createdAt: {
-        $gte: lastMonth.start,
-        $lte: lastMonth.end,
-      },
+      createdAt: { $gte: lastMonth.start, $lte: lastMonth.end },
     });
+
     const thisMonthOrdersPromise = Order.find({
-  createdAt: {
-    $gte: thisMonth.start,
-    $lte: thisMonth.end,
-  },
-});
+      createdAt: { $gte: thisMonth.start, $lte: thisMonth.end },
+    });
 
-const lastMonthOrdersPromise = Order.find({
-  createdAt: {
-    $gte: lastMonth.start,
-    $lte: lastMonth.end,
-  },
-});
-const lastSixMonthOrdersPromise = Order.find({
-  createdAt: {
-    $gte: sixMonthsAgo,
-    $lte: today,
-  },
-});
-const [
-  thisMonthProducts,
-  thisMonthUsers,
-  thisMonthOrders,
-  lastMonthProducts,
-  lastMonthUsers,
-  lastMonthOrders,
-  productsCount,  
-  usersCount,     
-  allOrders,
-  lastSixMonthOrders,
+    const lastMonthOrdersPromise = Order.find({
+      createdAt: { $gte: lastMonth.start, $lte: lastMonth.end },
+    });
 
-] 
-= await Promise.all([
-  thisMonthProductsPromise,
-  thisMonthUsersPromise,
-  thisMonthOrdersPromise,
-  lastMonthProductsPromise,
-  lastMonthUsersPromise,
-  lastMonthOrdersPromise,
-  Product.countDocuments(),  
-  User.countDocuments(),  
-  Order.find({}).select("total"), 
-  lastSixMonthOrdersPromise 
-]);
-const thisMonthRevenue = thisMonthOrders.reduce(
-  (total, order) => total + (order.total || 0),
-  0
-);
-const lastMonthRevenue = lastMonthOrders.reduce(
-  (total, order) => total + (order.total || 0),
-  0
-);
-const changepercent = {
-  revenue: calculatePercentage(thisMonthRevenue, lastMonthRevenue),
-  product: calculatePercentage(
-    thisMonthProducts.length,
-    lastMonthProducts.length
-  ),
-  user: calculatePercentage(thisMonthUsers.length, lastMonthUsers.length),
-  order: calculatePercentage(
-    thisMonthOrders.length,
-    lastMonthOrders.length
-  ),
-};
+    const lastSixMonthOrdersPromise = Order.find({
+      createdAt: { $gte: sixMonthsAgo, $lte: today },
+    });
 
-const revenue = allOrders.reduce(
-  (total, order) => total + (order.total || 0),
-  0
-);
+    const latestTransactionsPromise = Order.find({})
+      .select(["orderItems", "discount", "total", "status"])
+      .limit(4);
 
-const count = {
-  revenue,
-  user: usersCount,
-  product: productsCount,
-  order: allOrders.length,
-};
+    const [
+      thisMonthProducts,
+      thisMonthUsers,
+      thisMonthOrders,
+      lastMonthProducts,
+      lastMonthUsers,
+      lastMonthOrders,
+      productsCount,
+      usersCount,
+      allOrders,
+      lastSixMonthOrders,
+      femaleUsersCount,
+      latestTransactions,  
+      OutOfStock,      
+    ] = await Promise.all([
+      thisMonthProductsPromise,
+      thisMonthUsersPromise,
+      thisMonthOrdersPromise,
+      lastMonthProductsPromise,
+      lastMonthUsersPromise,
+      lastMonthOrdersPromise,
+      Product.countDocuments(),
+      User.countDocuments(),
+      Order.find({}).select("total"),
+      lastSixMonthOrdersPromise,
+      User.countDocuments({ gender: "female" }),
+      latestTransactionsPromise,
+      Product.countDocuments({ stock: 0 }),
+    ]);
 
-const orderMonthCounts = new Array(6).fill(0);
-const orderMonthyRevenue = new Array(6).fill(0);
+    const thisMonthRevenue = thisMonthOrders.reduce(
+      (total, order) => total + (order.total || 0),
+      0
+    );
+    const lastMonthRevenue = lastMonthOrders.reduce(
+      (total, order) => total + (order.total || 0),
+      0
+    );
 
-lastSixMonthOrders.forEach((order) => {
-  const creationDate = order.createdAt;
-  const monthDiff = today.getMonth() - creationDate.getMonth();
+    const changepercent = {
+      revenue: calculatePercentage(thisMonthRevenue, lastMonthRevenue),
+      product: calculatePercentage(thisMonthProducts.length, lastMonthProducts.length),
+      user: calculatePercentage(thisMonthUsers.length, lastMonthUsers.length),
+      order: calculatePercentage(thisMonthOrders.length, lastMonthOrders.length),
+    };
 
-  if (monthDiff < 6) {
-    orderMonthCounts[6 - monthDiff - 1] += 1;
-    orderMonthyRevenue[6 - monthDiff - 1] += order.total;
+    const revenue = allOrders.reduce(
+      (total, order) => total + (order.total || 0),
+      0
+    );
 
+    const count = {
+      revenue,
+      user: usersCount,
+      product: productsCount,
+      order: allOrders.length,
+    };
+
+    const orderMonthCounts = new Array(6).fill(0);
+    const orderMonthyRevenue = new Array(6).fill(0);
+
+    lastSixMonthOrders.forEach((order) => {
+      const creationDate = order.createdAt;
+      const monthDiff = today.getMonth() - creationDate.getMonth();
+      if (monthDiff < 6) {
+        orderMonthCounts[6 - monthDiff - 1] += 1;
+        orderMonthyRevenue[6 - monthDiff - 1] += order.total;
+      }
+    });
+
+    const categories = await Product.distinct("category");
+    const categoryCount = await getInventory({ categories, productsCount });
+
+    const userRatio = {
+      male: usersCount - femaleUsersCount,
+      female: femaleUsersCount,
+    };
+
+    const modifiedLatestTransaction = latestTransactions.map((i) => ({
+      _id: i._id,
+      discount: i.discount,
+      amount: i.total,
+      quantity: i.orderItems.length,
+      status: i.status,
+    }));
+
+    stats = {
+      categoryCount,
+      changepercent,
+      count,
+      chart: {
+        order: orderMonthCounts,
+        revenue: orderMonthyRevenue,
+      },
+      userRatio,
+      latestTransactions: modifiedLatestTransaction,
+    };
+
+    mycache.set("admin-stats", JSON.stringify(stats));
   }
+
+  return res.status(200).json({ success: true, stats });
 });
-const categories = await Product.distinct("category");
-const categoriesCountPromise = categories.map((category: string) =>
-  Product.countDocuments({ category })
-);
-const categoriesCount = await Promise.all(categoriesCountPromise);
-const categoryCount: Record<string, number>[] = [];
-categories.forEach((category, i) => {
-  categoryCount.push({
-    [category]: Math.round((categoriesCount[i] / productsCount) * 100),
-  });
-});
-stats = {
-  categoryCount,
-  changepercent,
-  count,
-  chart: {
-   order:orderMonthCounts,
-   revenue:orderMonthyRevenue,
-  },
-};  
+
+export const getPieCharts = TryCatch(async (req, res, next) => {
+  let charts;
+  if (mycache.has("admin-pie-charts"))
+    charts = JSON.parse(mycache.get("admin-pie-charts") as string);
+  else {
+    const [
+      processingOrder,
+      shippedOrder,
+      deliveredOrder,
+      categories,
+      productsCount,
+      OutOfStock,   
+    ] = await Promise.all([
+      Order.countDocuments({ status: "Processing" }),
+      Order.countDocuments({ status: "Shipped" }),
+      Order.countDocuments({ status: "Delivered" }),
+      Product.distinct("category"),
+      Product.countDocuments(),
+      Product.countDocuments({ stock: 0 }),  
+    ]);
+
+    const orderFullfillment = {
+      processing: processingOrder,
+      shipped: shippedOrder,
+      delivered: deliveredOrder,
+    };
+
+    const categoryCount = await getInventory({ categories, productsCount });
+
+    const stockAvailability = {
+      inStock: productsCount - OutOfStock,
+      outOfStock: OutOfStock,
+    };
+
+    charts = {
+      orderFullfillment,
+      productCategories: categoryCount,
+      stockAvailability,
+    };
+
+    mycache.set("admin-pie-charts", JSON.stringify(charts));
   }
 
-  return res.status(200).json({
-    success: true,
-    stats,
-  });
+  return res.status(200).json({ success: true, charts });
 });
 
-export const getPieCharts = TryCatch(async () => {});
 export const getBarCharts = TryCatch(async () => {});
 export const getLineCharts = TryCatch(async () => {});
