@@ -4,6 +4,7 @@ import { Order } from "../models/order.js";
 import { Product } from "../models/product.js";
 import { User } from "../models/user.js";
 import { calculatePercentage, getInventory } from "../utils/features.js";
+import { allOrders } from "./order.js";
 
 export const getDashboardStats = TryCatch(async (req, res, next) => {
   let stats = {};
@@ -56,6 +57,14 @@ export const getDashboardStats = TryCatch(async (req, res, next) => {
       .select(["orderItems", "discount", "total", "status"])
       .limit(4);
 
+    const allOrderPromise =Order.find({}).select([
+      "total",
+      "discount",
+      "subtotal",
+      "tax",
+      "shippingCharges",
+])
+
     const [
       thisMonthProducts,
       thisMonthUsers,
@@ -69,7 +78,8 @@ export const getDashboardStats = TryCatch(async (req, res, next) => {
       lastSixMonthOrders,
       femaleUsersCount,
       latestTransactions,  
-      OutOfStock,      
+      OutOfStock,     
+      allOrder,
     ] = await Promise.all([
       thisMonthProductsPromise,
       thisMonthUsersPromise,
@@ -84,6 +94,7 @@ export const getDashboardStats = TryCatch(async (req, res, next) => {
       User.countDocuments({ gender: "female" }),
       latestTransactionsPromise,
       Product.countDocuments({ stock: 0 }),
+      allOrderPromise,
     ]);
 
     const thisMonthRevenue = thisMonthOrders.reduce(
@@ -193,11 +204,41 @@ export const getPieCharts = TryCatch(async (req, res, next) => {
       inStock: productsCount - OutOfStock,
       outOfStock: OutOfStock,
     };
+    const allOrders = await Order.find({});
+     const grossIncome = allOrders.reduce(
+     (prev, order) => prev + (order.total || 0),
+      0
+);
+
+     const discount = allOrders.reduce(
+     (prev, order) => prev + (order.discount || 0),
+      0
+);
+
+     const productionCost = allOrders.reduce(
+     (prev, order) => prev + (order.shippingCharges || 0),
+      0
+);
+   const burnt = allOrders.reduce(
+     (prev, order) => prev + (order.tax || 0),
+      0
+);
+   const marketingCost = Math.round(grossIncome * (30/100)); 
+   
+
+    const revenueDistribution = {
+  netMargin: 343,
+  discount: 3434,
+  productCost: 3434,
+  burnt: 3434,
+  marketingCost: 3434,
+};
 
     charts = {
       orderFullfillment,
       productCategories: categoryCount,
       stockAvailability,
+      revenueDistribution,
     };
 
     mycache.set("admin-pie-charts", JSON.stringify(charts));
