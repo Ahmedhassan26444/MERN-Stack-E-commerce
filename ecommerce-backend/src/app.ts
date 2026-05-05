@@ -4,12 +4,15 @@ import { connectDB } from "./utils/features.js";
 import NodeCache from "node-cache";
 import{ config } from "dotenv";
 import morgan from "morgan";
+import { Stripe } from "stripe";
+
 // Importing Routes
 import userRoute from "./routes/user.js";
 import productRoute from "./routes/products.js";
 import orderRoute from "./routes/order.js";
 import paymentRoute from "./routes/payment.js";
 import dashboardRoute from "./routes/stats.js";
+
 
 
 const port = process.env.PORT || 4000;
@@ -21,9 +24,11 @@ config({
 
 // Connect to MongoDB
 const mongo_URI = process.env.MONGO_URI || "";
+const stripekey = process.env.Stripe_Key || "";
+
 
 connectDB(mongo_URI);
-
+export const stripe = new Stripe(stripekey);
 export const mycache = new NodeCache();
 
 const app = express();

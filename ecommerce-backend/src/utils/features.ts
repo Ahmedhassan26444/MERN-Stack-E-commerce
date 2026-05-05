@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose"; 
 import { InvalidateCacheProps, OrderItemType } from "../types/types.js";
 import { Product } from "../models/product.js";
 import { mycache } from "../app.js";
@@ -46,7 +46,13 @@ export const invalidateCache = async ({
 }
 
   if (admin) {
-  }
+  mycache.del([
+    "admin-stats",
+    "admin-pie-charts",
+    "admin-bar-charts",
+    "admin-line-charts",
+  ]);
+}
 };
 
 
@@ -87,16 +93,29 @@ export const getInventory = async ({
   return categoryCount;
 };
 
-export  const func = ({length,docArr}:{length:number,docArr:Document[]})=> {
-  const today = new Date(); 
-  const data = new Array(6).fill(0);
-    docArr.forEach((order) => {
-    const creationDate = (order as any).createdAt;
-      const monthDiff = (today.getMonth() - creationDate.getMonth() + 12) % 12;
-      if (monthDiff < length) {
-        data[length - monthDiff - 1] += 1;
-      }
-
-    });
-    return data;
+interface MyDocument  {
+  createdAt: Date;
+  discount?: number;
+  total?: number;
 }
+
+type FuncProps = {
+  length: number;
+  docArr: MyDocument[];
+  today: Date;
+  property?: string;
+};
+
+export const getChartData = ({ length, docArr, today, property }: FuncProps) => {
+  const data: number[] = new Array(length).fill(0);
+
+  docArr.forEach((i) => {
+    const creationDate = i.createdAt;
+    const monthDiff = (today.getMonth() - creationDate.getMonth() + 12) % 12;
+    if (monthDiff < length) {
+      data[length - monthDiff - 1] += property ? (i as any)[property] : 1;
+    }
+  });
+
+  return data;
+};
