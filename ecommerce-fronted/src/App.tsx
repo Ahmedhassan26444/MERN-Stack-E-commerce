@@ -1,8 +1,13 @@
-import { lazy, Suspense } from "react"
+import { lazy, Suspense, useEffect } from "react"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import Loader from "./components/loader"
 import Header from "./components/header"
 import { Toaster } from "react-hot-toast"
+import { userExist, userNotExist } from "./redux/reducer/userReducer"
+import { auth } from "./firebase"
+import { onAuthStateChanged } from "firebase/auth/web-extension"
+import { useDispatch } from "react-redux"
+import { getUser } from "./redux/api/userApi"
 
 const Home = lazy(() => import("./pages/home"))
 const Cart = lazy(() => import("./pages/cart"))
@@ -27,6 +32,19 @@ const ProductManagement = lazy(() => import("./pages/admin/management/productman
 const TransactionManagement = lazy(() => import("./pages/admin/management/transactionmanagement"))
 
 const App = () => {
+ const dispatch = useDispatch();
+
+useEffect(() => {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const data = await getUser(user.uid);
+      dispatch(userExist(data.user));
+    } else {
+      dispatch(userNotExist());
+    }
+  });
+}, [dispatch]);
+
   return (
     <Router>
       <Header />
