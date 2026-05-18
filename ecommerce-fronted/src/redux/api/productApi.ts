@@ -7,6 +7,7 @@ import type {
   ProductResponse,
   SearchProductResponse,
   SearchProductsRequest,
+  UpdateProductRequest,
 } from "../../types/api-types";
 
 export const productAPI = createApi({
@@ -50,6 +51,14 @@ export const productAPI = createApi({
     query: ({formData,id}) => ({
       url: `new?id=${id}`,
       method: "Post",
+      body: formData
+    }),
+    invalidatesTags:["product"],
+}),
+ updateProduct: builder.mutation<MessageResponse, UpdateProductRequest>({
+    query: ({formData,userId, productId}) => ({
+      url: `${productId}?id=${userId}`,
+      method: "Put",
       body: formData
     }),
     invalidatesTags:["product"],
