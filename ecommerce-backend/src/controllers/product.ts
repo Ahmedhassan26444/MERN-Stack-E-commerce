@@ -26,7 +26,7 @@ export const newProduct = TryCatch(
       price,
       stock,
       category: category.toLowerCase(),
-      photo: photo.path,
+      photo: photo.path.replace(/\\/g, "/"),
     });
     await invalidateCache({ product: true });
 
@@ -122,7 +122,7 @@ export const updateProduct = TryCatch(
       rm(product.photo!, () => {
         console.log("Old Photo Deleted");
       });
-      product.photo = photo.path;
+      product.photo = photo.path.replace(/\\/g, "/");
     }
 
     if (name) product.name = name;
@@ -130,7 +130,7 @@ export const updateProduct = TryCatch(
     if (stock) product.stock = stock;
     if (category) product.category = category;
     await product.save();
-    await invalidateCache({ product: true });
+    await invalidateCache({ product: true, productId: String(product._id) });
     return res.status(200).json({
       success: true,
       message: "Product updated Successfully",
@@ -138,20 +138,22 @@ export const updateProduct = TryCatch(
   });
 
 
-  export const deleteProduct = TryCatch(async (req, res, next) => {
+export const deleteProduct = TryCatch(async (req, res, next) => {
   const product = await Product.findById(req.params.id);
   if (!product) return next(new ErrorHandler(" product not found", 404));
   
   rm(product.photo!, () => {
-        console.log(" Product photo deleted");
-      });
+    console.log(" Product photo deleted");
+  });
   await product.deleteOne();
+  await invalidateCache({ product: true, productId: String(product._id) });
     
   return res.status(200).json({
     success: true,
     message: "Product deleted Successfully",
   });
-})
+});
+
 export const getAllProducts = TryCatch(
   async (req: Request<{}, {}, {}, SearchRequestQuery>, res, next) => {
     const { search, sort, category, price } = req.query;
