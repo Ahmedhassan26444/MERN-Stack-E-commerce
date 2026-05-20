@@ -2,27 +2,33 @@ import { useEffect, useState } from "react";
 import { VscError } from "react-icons/vsc";
 import CartItem from "../components/Cart-item"; // apna sahi path likho
 import { Link } from "react-router-dom";
-
-const cartItems = [
-  {
-    productId: "asdasdasd",
-    photo: "https://m.media-amazon.com/images/I/71TPda7cwUL._SX522_.jpg",
-    name: "Macbook",
-    price: 3000,
-    quantity: 4,
-    stock: 10,
-  },
-];
-
-const subtotal = 4000;
-const tax = Math.round(subtotal * 0.18);
-const shippingCharges = 200;
-const discount = 400;
-const total = subtotal + tax + shippingCharges - discount;
+import { useDispatch, useSelector } from "react-redux";
+import type { CartReducerInitialState } from "../types/reducerTypes";
+import type { cartItem } from "../types/types";
+import { addToCart, removeFromCart } from "../redux/reducer/cartReducer";
 
 const Cart = () => {
+  const { cartItems, subtotal, tax, total, shippingCharges, discount } =
+  useSelector(
+    (state: { cartReducer: CartReducerInitialState }) =>
+      state.cartReducer
+  );
   const [coupenCode, setcoupenCode] = useState<string>("");
   const [isValidcoupenCode, setIsValidcoupenCode] = useState<boolean>(false);
+ const dispatch = useDispatch();
+  const incrementCartHandler = (cartItem: cartItem) => {
+if(cartItem.quantity >= cartItem.stock) return;
+  dispatch(addToCart({ ...cartItem, quantity: cartItem.quantity + 1 }));
+};
+ const decrementCartHandler = (cartItem: cartItem) => {
+if(cartItem.quantity <= 1) return;
+  dispatch(addToCart({ ...cartItem, quantity: cartItem.quantity - 1 }));
+};
+ const removeFromCartHandler = (productId: string) => {
+  
+  dispatch(removeFromCart(productId));
+};
+
 
   useEffect(() => {
     const timeOutID = setTimeout(() => {
@@ -40,7 +46,11 @@ const Cart = () => {
     <div className="cart">
       <main>
         {cartItems.length > 0 ? cartItems.map((i, idx) => (
-          <CartItem key={idx} cartItem={i} />
+          <CartItem 
+          incrementCartHandler={incrementCartHandler}
+          decrementCartHandler={decrementCartHandler}
+          removeFromCartHandler={removeFromCartHandler}
+           key={idx} cartItem={i} />
         )) :<h1>No Item Added</h1>}
       </main>
       <aside>
