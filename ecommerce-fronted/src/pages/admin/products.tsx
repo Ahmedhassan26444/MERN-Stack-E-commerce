@@ -50,7 +50,7 @@ const Products = () => {
 
   useEffect(() => {
     if (isError) toast.error((error as CustomError).data.message);
-  }, [isError]);
+  });
 
   useEffect(() => {
     if (data)
