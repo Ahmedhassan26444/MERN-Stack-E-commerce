@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { AllOrdersResponse, MessageResponse, NewOrderRequest, updateOrderRequest } from "../../types/api-types";
+import type { AllOrdersResponse, MessageResponse, NewOrderRequest, orderDetailsResponse, updateOrderRequest } from "../../types/api-types";
 
 export const orderApi = createApi({
   reducerPath: "orderApi",
@@ -14,7 +14,7 @@ export const orderApi = createApi({
     }),
     updateOrder: builder.mutation<MessageResponse, updateOrderRequest>({
   query: ({ userId, orderId }) => ({
-    url: `${userId}/${orderId}`,
+    url: `${orderId}?id=${userId}`,
     method: "PUT",
   }),
   invalidatesTags: ["Order"],
@@ -30,11 +30,11 @@ deleteOrder: builder.mutation<MessageResponse, updateOrderRequest>({
       query: (id) => `all?id=${id}`,
       providesTags: ["Order"],
     }),
-    orderDetails: builder.query<AllOrdersResponse, string>({
+    orderDetails: builder.query<orderDetailsResponse, string>({
       query: (id) => id,
       providesTags: ["Order"],
     }),
-    myOrders: builder.query<AllOrdersResponse, string>({
+    myOrders: builder.query<orderDetailsResponse, string>({
       query: (id) => `my?id=${id}`,
       providesTags: ["Order"],
     }),

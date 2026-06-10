@@ -1,10 +1,9 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { FaTrash } from "react-icons/fa";
 import AdminSidebar from "../../../components/admin/AdminSidebar";
 import { useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useProductDetailsQuery, useUpdateProductMutation, useDeleteProductMutation } from "../../../redux/api/productApi";
 import type { UserReducerInitialState } from "../../../types/reducerTypes";
 import { server } from "../../../redux/store";
@@ -17,7 +16,7 @@ const { user } = useSelector(
 );
 const params = useParams();
 const navigate = useNavigate();
-const { data, isLoading } = useProductDetailsQuery(params.id!);
+const { data, isLoading, isError } = useProductDetailsQuery(params.id!);
 
  const { price, photo, name, stock, category } = data?.product || {
   photo: "",
@@ -85,6 +84,8 @@ const { data, isLoading } = useProductDetailsQuery(params.id!);
       setCategoryUpdate(data.product.category);
     }
   }, [data]);
+
+  if (isError) return <Navigate to={"/404"} />;
 
   return (
     <div className="admin-container">

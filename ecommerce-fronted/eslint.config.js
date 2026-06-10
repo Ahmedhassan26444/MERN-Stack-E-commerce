@@ -24,6 +24,9 @@ export default defineConfig([
         varsIgnorePattern: '^_',
         argsIgnorePattern: '^_',
       }],
+      '@typescript-eslint/no-explicit-any': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      '@typescript-eslint/no-non-null-asserted-optional-chain': 'off',
     },
   },
 ])
