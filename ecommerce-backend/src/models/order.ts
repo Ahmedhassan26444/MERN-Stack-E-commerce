@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const schema = new mongoose.Schema(
 {
   shippingInfo: {
-    adress:{
+    address:{
         type: String,
         required:true,
     },
