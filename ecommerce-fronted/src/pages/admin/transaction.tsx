@@ -52,7 +52,7 @@ const Transaction = () => {
           action: <Link to={`/admin/transaction/${i._id}`}>Manage</Link>,
         }))
       );
-  }, [data]);
+  }, [data]); 
 
   const Table = TableHOC<DataType>(
     columns,

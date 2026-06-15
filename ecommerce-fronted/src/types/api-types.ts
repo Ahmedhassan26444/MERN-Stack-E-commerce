@@ -15,6 +15,10 @@ export type UserResponse = {
   success: boolean;
   user: User;
 };
+export type AllUsersResponse = {
+  success: boolean;
+  users: User[];
+};
 export type AllProductsResponse = {
   success: boolean;
   products: Product[];
@@ -76,4 +80,8 @@ export type AllOrdersResponse = {
 export type orderDetailsResponse = {
   success: boolean;
   order: Order;
+};
+export type DeleteUserRequest = {
+  userId: string;
+  adminUserId: string;
 };
