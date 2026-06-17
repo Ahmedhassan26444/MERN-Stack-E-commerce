@@ -2,19 +2,15 @@ import AdminSidebar from "../../../components/admin/AdminSidebar";
 import { DoughnutChart, PieChart } from "../../../components/admin/Charts";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../redux/store";
-import type { CustomError } from "../../../types/api-types";
-import toast from "react-hot-toast";
 import { usePieQuery } from "../../../redux/api/dashboadApi";
 import { Skeleton } from "../../../components/loader";
+import { Navigate } from "react-router-dom";
 
 const PieCharts = () => {
   const { user } = useSelector((state: RootState) => state.userReducer);
-  const { isLoading, data, error, isError } = usePieQuery(user?._id!);
+  const { isLoading, data,  isError } = usePieQuery(user?._id!);
 
-  if (isError) {
-    const err = error as CustomError;
-    toast.error(err.data.message);
-  }
+  if (isError) return <Navigate to= {"/admin/dashboard"} />;
 
   const order = data?.charts.orderFullfillment!;
   const categories = data?.charts.productCategories!;
